@@ -8,6 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- <link rel="stylesheet" type="text/css" media="screen" href="main.css" /> -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+
 </head>
 
 <body>
@@ -102,6 +104,21 @@
     </div>
   </section>
 
+    <!-- <a class="waves-effect waves-light btn modal-trigger" href="#modal1">Modal</a> -->
+
+    <!-- Modal Structure -->
+  <article>
+    <div id="modal1" class="modal">
+      <div class="modal-content">
+        <h4>Detection Complete!</h4>
+        <img class="materialboxed" src="data:image/jpg;base64,{{ detection_img }}">
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-close waves-effect waves-green btn-flat">Agree</a>
+      </div>
+    </div>
+  </article>
+
   <footer>
     <div class="container center-align">
       <div class="card">Footer</div>
@@ -110,5 +127,19 @@
 </body>
 <!-- <script src="main.js"></script> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var elems = document.querySelectorAll('.modal');
+    var instances = M.Modal.init(elems);
+    var img = '{{ detection_img }}';
+    console.log('Image from flask:');
+    console.log(img);
+    var instance = M.Modal.getInstance(document.getElementById('modal1'));
+    if(img && img.length != 0) {
+      instance.open();
+    } else {
+      instance.close();
+    }
+  });
+</script>
 </html>

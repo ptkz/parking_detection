@@ -15,7 +15,7 @@ class Detector:
         networkOutput = cvNet.forward()
         
         rows, cols, channels = img.shape
-
+        
         for detection in networkOutput[0,0]:
 
             score = float(detection[2])
