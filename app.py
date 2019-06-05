@@ -2,12 +2,15 @@ from ObjectDetector import Detector
 import io
 import base64
 import os
+import cv2
+import numpy as np
 
-from flask import Flask, render_template, request, make_response
+from flask import Flask, render_template, request, make_response, send_file
 from flask_material import Material
 
-from PIL import Image
-from flask import send_file
+from PIL import Image, JpegImagePlugin
+
+import vis_utils
 
 app = Flask(__name__, static_folder="assets")
 Material(app)
@@ -16,11 +19,13 @@ detector = Detector()
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
+CATEGORY_INDEX = {1: {'name': 'occupied', 'id': 1}, 2: {'name': 'empty', 'id': 2}}
+
 # detector.detectNumberPlate('twocar.jpg')
 
-def url_for_static(filename, image_type):
-    root = app.config.get('STATIC_ROOT', '')
-    return join(root, filename)
+# def url_for_static(filename, image_type):
+#     root = app.config.get('STATIC_ROOT', '')
+#     return join(root, filename)
 
 def get_images(image_type):
     root = app.config.get('STATIC_ROOT', image_type)
@@ -40,10 +45,22 @@ def get_images(image_type):
         return images
 
 def detect_image(image): 
-    img = detector.detectObject(image)
+    (boxes, scores, classes, num) = detector.get_classification(image)
+    img = vis_utils.visualize_boxes_and_labels_on_image_array(
+        image, 
+        np.squeeze(boxes),
+        np.squeeze(classes).astype(np.int32),
+        np.squeeze(scores),
+        CATEGORY_INDEX,
+        use_normalized_coordinates=True,
+        line_thickness=4,
+        min_score_thresh=0.80,
+        skip_scores=False,
+        skip_labels=False)
         
+    image_pil = Image.fromarray(np.uint8(img))
     byte_io = io.BytesIO()
-    byte_io.write(img)
+    image_pil.save(byte_io, format='JPEG')
     return base64.b64encode(byte_io.getvalue()).decode('utf-8')
 
 
@@ -58,11 +75,19 @@ def index():
 @app.route("/", methods=['POST'])
 def upload():
     if request.method == 'POST':
-        print('------------------ FILE ---------------')
-        print(request)
-        print('------------------ End of FILE ---------------')
 
-        file = Image.open(request.files['file'].stream)
+
+        upload = request.files['file']
+        filename = upload.filename
+
+        target = os.path.join(APP_ROOT, 'assets', 'uploads')
+        destination = '/'.join([target, filename])
+
+        upload.save(destination)
+
+        file = cv2.imread(destination)
+
+        # file = cv2.imread(request.files['file'].stream)
         # img = detector.detectObject(file)
         
         # byte_io = io.BytesIO()
@@ -91,8 +116,8 @@ def run_detection(filename):
         file_path = os.path.join('assets', filename)
         print(file_path)
 
-        image = Image.open(file_path)
-
+        # image = Image.open(file_path)
+        image = cv2.imread(file_path)
         base64image = detect_image(image)
         return render_template('index.html', detection_img=base64image, test_images=test_images, train_images=train_images)
 

@@ -17,55 +17,61 @@
     <h1>Parking Detection</h1>
   </header>
 
-  <section class="container center-align">
-    <div class="row">
-      <div class="card col s4">
-        <h3 class="subheader">Train Images</h3>
-        {% for image in train_images %}
-          <div class="card col s6 hoverable" style="padding: 5px">
-            <div class="card-image">
-              <img style="height: 120px" class="materialboxed" width="120px" src="{{url_for('static', filename=image)}}">
+  <div class="parallax-container">
+    <div class="parallax"><img src="{{url_for('static', filename='utak.jpg')}}"></div>
+  </div>
+  <div class="section white">
+
+    <section class="container center-align">
+      <div class="row">
+        <div class="card col s4">
+          <h3 class="subheader">Train Images</h3>
+          {% for image in train_images %}
+            <div class="card col s6 hoverable" style="padding: 5px">
+              <div class="card-image">
+                <img style="height: 120px" class="materialboxed" width="120px" src="{{url_for('static', filename=image)}}">
+              </div>
+              <div class="card-action">
+                <a href="/run_detection/{{image}}">Detect</a>
+              </div>
             </div>
-            <div class="card-action">
-              <a href="/run_detection/{{image}}">Detect</a>
+          {% endfor %}
+        </div>
+        <div class="col s4">
+          <h3 class="subheader">Upload Images</h3>
+          <form class="form" action="/" method="POST" enctype="multipart/form-data">
+            <div class="file-field input-field">
+              <div class="btn">
+                <span>File</span>
+                <input type="file" name="file" />
+              </div>
+              <div class="file-path-wrapper">
+                <input class="file-path validate" type="text">
+              </div>
             </div>
-          </div>
-        {% endfor %}
+            
+            <button class="btn" type="submit">Run Detection</button>
+          </form>
+        </div>
+        <div class="card col s4">
+          <h3 class="subheader">Test Images</h3>
+          {% for image in test_images %}
+            <div class="card col s6 hoverable" style="padding: 5px">
+              <div class="card-image">
+                <img style="height: 120px" class="materialboxed" width="120px" src="{{url_for('static', filename=image)}}">
+              </div>
+              <div class="card-action">
+                <a href="/run_detection/{{image}}">Detect</a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
       </div>
-      <div class="col s4">
-        <h3 class="subheader">Upload Images</h3>
-        <form class="form" action="/" method="POST" enctype="multipart/form-data">
-          <div class="file-field input-field">
-            <div class="btn">
-              <span>File</span>
-              <input type="file" name="file" />
-            </div>
-            <div class="file-path-wrapper">
-              <input class="file-path validate" type="text">
-            </div>
-          </div>
-          
-          <button class="btn" type="submit">Run Detection</button>
-        </form>
+      <div class="row">
+        
       </div>
-      <div class="card col s4">
-        <h3 class="subheader">Test Images</h3>
-        {% for image in test_images %}
-          <div class="card col s6 hoverable" style="padding: 5px">
-            <div class="card-image">
-              <img style="height: 120px" class="materialboxed" width="120px" src="{{url_for('static', filename=image)}}">
-            </div>
-            <div class="card-action">
-              <a href="/run_detection/{{image}}">Detect</a>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    </div>
-    <div class="row">
-      
-    </div>
-  </section>
+    </section>
+  </div>
 
     <!-- <a class="waves-effect waves-light btn modal-trigger" href="#modal1">Modal</a> -->
 
@@ -102,6 +108,9 @@
 
     var imageElems = document.querySelectorAll('.materialboxed');
     var imageInstances = M.Materialbox.init(imageElems);
+
+    var parallax = document.querySelectorAll('.parallax');
+    var parallaxInstances = M.Parallax.init(parallax);
     
     var img = '{{ detection_img }}';
     var instance = M.Modal.getInstance(document.getElementById('modal1'));
