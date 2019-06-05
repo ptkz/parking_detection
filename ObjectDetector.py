@@ -19,7 +19,7 @@ class Detector:
         for detection in networkOutput[0,0]:
 
             score = float(detection[2])
-            if score > 0.5:
+            if score > 0.8:
                 class_id = int(detection[1])
                 
                 left = detection[3] * cols
@@ -28,9 +28,9 @@ class Detector:
                 bottom = detection[6] * rows
 
                 if(class_id==0):
-                    cv.rectangle(img, (int(left), int(top)), (int(right), int(bottom)), (0, 0, 255), thickness=2)
+                    cv.rectangle(img, (int(left), int(top)), (int(right), int(bottom)), (0, 0, 255), thickness=1)
                 if(class_id==1):
-                    cv.rectangle(img, (int(left), int(top)), (int(right), int(bottom)), (0, 255, 0), thickness=2)
+                    cv.rectangle(img, (int(left), int(top)), (int(right), int(bottom)), (0, 255, 0), thickness=1)
                 
                 # label = classNames[class_id] + ": " + str("{0:.2f}".format(score))
                 # labelSize, baseLine = cv.getTextSize(label, cv.FONT_HERSHEY_TRIPLEX, 0.5, 1)

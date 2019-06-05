@@ -19,73 +19,20 @@
 
   <section class="container center-align">
     <div class="row">
-      <div class="card col s6 red">
+      <div class="card col s4">
         <h3 class="subheader">Train Images</h3>
-        <ul class="collection">
-          <li class="collection-item">
-            <div class="valign-wrapper">
-              <i class="material-icons left circle white-text">folder</i>
-              <div class="title">
-                Image 1
-              </div>
-              <i class="material-icons ml-auto">info</i>
+        {% for image in train_images %}
+          <div class="card col s6 hoverable" style="padding: 5px">
+            <div class="card-image">
+              <img style="height: 120px" class="materialboxed" width="120px" src="{{url_for('static', filename=image)}}">
             </div>
-          </li>
-          <li class="collection-item">
-            <div class="valign-wrapper">
-              <i class="material-icons left circle white-text">folder</i>
-              <div class="title">
-                Image 2
-              </div>
-              <i class="material-icons ml-auto">info</i>
+            <div class="card-action">
+              <a href="/run_detection/{{image}}">Detect</a>
             </div>
-          </li>
-          <li class="collection-item">
-            <div class="valign-wrapper">
-              <i class="material-icons left circle white-text">folder</i>
-              <div class="title">
-                Image 3
-              </div>
-              <i class="material-icons ml-auto">info</i>
-            </div>
-          </li>
-        </ul>
+          </div>
+        {% endfor %}
       </div>
-      <div class="card col s6 blue">
-        <h3 class="subheader">Test Images</h3>
-        <ul class="collection">
-          <li class="collection-item">
-            <div class="valign-wrapper">
-              <i class="material-icons left circle white-text">folder</i>
-              <div class="title">
-                Image 1
-              </div>
-              <i class="material-icons ml-auto">info</i>
-            </div>
-          </li>
-          <li class="collection-item">
-            <div class="valign-wrapper">
-              <i class="material-icons left circle white-text">folder</i>
-              <div class="title">
-                Image 2
-              </div>
-              <i class="material-icons ml-auto">info</i>
-            </div>
-          </li>
-          <li class="collection-item">
-            <div class="valign-wrapper">
-              <i class="material-icons left circle white-text">folder</i>
-              <div class="title">
-                Image 3
-              </div>
-              <i class="material-icons ml-auto">info</i>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col s12">
+      <div class="col s4">
         <h3 class="subheader">Upload Images</h3>
         <form class="form" action="/" method="POST" enctype="multipart/form-data">
           <div class="file-field input-field">
@@ -98,9 +45,25 @@
             </div>
           </div>
           
-          <input class="btn" type="submit" />
+          <button class="btn" type="submit">Run Detection</button>
         </form>
       </div>
+      <div class="card col s4">
+        <h3 class="subheader">Test Images</h3>
+        {% for image in test_images %}
+          <div class="card col s6 hoverable" style="padding: 5px">
+            <div class="card-image">
+              <img style="height: 120px" class="materialboxed" width="120px" src="{{url_for('static', filename=image)}}">
+            </div>
+            <div class="card-action">
+              <a href="/run_detection/{{image}}">Detect</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="row">
+      
     </div>
   </section>
 
@@ -111,7 +74,12 @@
     <div id="modal1" class="modal">
       <div class="modal-content">
         <h4>Detection Complete!</h4>
-        <img class="materialboxed" src="data:image/jpg;base64,{{ detection_img }}">
+        <div class="col-sm-9">
+          <img class="materialboxed" width="640px" src="data:image/jpg;base64,{{ detection_img }}">
+        </div>
+        <div class="col-sm-3">
+          <h5>Precision</h5>
+        </div>
       </div>
       <div class="modal-footer">
         <a href="#!" class="modal-close waves-effect waves-green btn-flat">Agree</a>
@@ -129,11 +97,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    var elems = document.querySelectorAll('.modal');
-    var instances = M.Modal.init(elems);
+    var modalElems = document.querySelectorAll('.modal');
+    var modalInstances = M.Modal.init(modalElems);
+
+    var imageElems = document.querySelectorAll('.materialboxed');
+    var imageInstances = M.Materialbox.init(imageElems);
+    
     var img = '{{ detection_img }}';
-    console.log('Image from flask:');
-    console.log(img);
     var instance = M.Modal.getInstance(document.getElementById('modal1'));
     if(img && img.length != 0) {
       instance.open();
