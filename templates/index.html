@@ -8,8 +8,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- <link rel="stylesheet" type="text/css" media="screen" href="main.css" /> -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
-
-
 </head>
 
 <body>
@@ -73,33 +71,71 @@
     </section>
   </div>
 
-    <!-- <a class="waves-effect waves-light btn modal-trigger" href="#modal1">Modal</a> -->
-
-    <!-- Modal Structure -->
+  <div class="container center-align">
+    <h3>Recent Uploads</h3>
+    <div class="carousel">
+    {% for image in uploaded_images %}
+      <img class="carousel-item" src="{{url_for('static', filename=image)}}">
+    {% endfor %}
+    </div>
+  </div>
+  <!-- Modal Structure -->
   <article>
     <div id="modal1" class="modal">
       <div class="modal-content">
         <h4>Detection Complete!</h4>
-        <div class="col-sm-9">
-          <img class="materialboxed" width="640px" src="data:image/jpg;base64,{{ detection_img }}">
-        </div>
-        <div class="col-sm-3">
-          <h5>Precision</h5>
-        </div>
+        <div class="row">
+          <div class="col s9">
+            <img class="materialboxed" width="640px" src="data:image/jpg;base64,{{ detection_img }}">
+          </div>
+          <div class="col s3">
+            <h5>Evaluation</h5>
+
+            {% if accuracy is defined %}
+            <div>
+              <h6>Accuracy: {{accuracy.accuracy}}%</h6>
+              <dl>
+                <dt>Empty spaces found: </dt>
+                <dd>{{accuracy.count_empty_det}} of {{accuracy.count_empty_ground}}</dd>
+                <dt>Occupied spaces found: </dt>
+                <dd>{{accuracy.count_occupied_det}} of {{accuracy.count_occupied_ground}}</dd>
+              </dl>
+            </div>
+            {% else %}
+            <div>
+              <span>
+                Not Available for uploaded images!
+              </span>
+            </div>
+            {% endif %}
+            
+          </div>
+        </div>  
       </div>
       <div class="modal-footer">
-        <a href="#!" class="modal-close waves-effect waves-green btn-flat">Agree</a>
+        <a class="modal-close waves-effect waves-green btn-flat">Close</a>
       </div>
     </div>
   </article>
 
-  <footer>
+  <footer style="border-top: 1px solid #a9a9a9">
     <div class="container center-align">
-      <div class="card">Footer</div>
+      <div class="row valign-wrapper" style="padding: 20px">
+        <div class="col s6">
+          <a href="https://github.com/ptkz/parking_detection">
+            <img src="{{url_for('static', filename='GitHub.png')}}">
+            <h5>Available on GitHub</h5>
+          </a>
+        </div>
+        <div class="col s6 valign-wrapper">
+          <a href="https://www.ubbcluj.ro/en/">
+            <img src="{{url_for('static', filename='logo_UBB.png')}}">
+          </a>
+        </div>
+      </div>
     </div>
   </footer>
 </body>
-<!-- <script src="main.js"></script> -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
@@ -111,6 +147,9 @@
 
     var parallax = document.querySelectorAll('.parallax');
     var parallaxInstances = M.Parallax.init(parallax);
+
+    var carouselElems = document.querySelectorAll('.carousel');
+    var carouselInstances = M.Carousel.init(carouselElems);
     
     var img = '{{ detection_img }}';
     var instance = M.Modal.getInstance(document.getElementById('modal1'));

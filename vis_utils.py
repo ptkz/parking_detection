@@ -1,16 +1,10 @@
-import abc
+# This file contains the minimal functionality needed to properly visualize the bounding boxes
+# in my implementation. Inspired by the visualization_util file from Tensorflow Object Detection API
 import collections
-import functools
-# Set headless-friendly backend.
-import matplotlib; matplotlib.use('Agg')  # pylint: disable=multiple-statements
-import matplotlib.pyplot as plt  # pylint: disable=g-import-not-at-top
 import numpy as np
 import PIL.Image as Image
-import PIL.ImageColor as ImageColor
 import PIL.ImageDraw as ImageDraw
 import PIL.ImageFont as ImageFont
-import six
-import tensorflow as tf
 
 STANDARD_COLORS = [
     'AliceBlue', 'Chartreuse', 'Aqua', 'Aquamarine', 'Azure', 'Beige', 'Bisque',
@@ -58,7 +52,7 @@ def draw_bounding_box_on_image(image,
   draw.line([(left, top), (left, bottom), (right, bottom),
              (right, top), (left, top)], width=thickness, fill=color)
   try:
-    font = ImageFont.truetype('arial.ttf', 24)
+    font = ImageFont.truetype('arial.ttf', 16)
   except IOError:
     font = ImageFont.load_default()
 
@@ -104,6 +98,7 @@ def draw_bounding_box_on_image_array(image,
                              use_normalized_coordinates)
   np.copyto(image, np.array(image_pil))
 
+# Default max_boxes_to_draw updated to 200 instead of 20
 def visualize_boxes_and_labels_on_image_array(
     image,
     boxes,
@@ -114,7 +109,7 @@ def visualize_boxes_and_labels_on_image_array(
     instance_boundaries=None,
     keypoints=None,
     use_normalized_coordinates=False,
-    max_boxes_to_draw=20,
+    max_boxes_to_draw=200,
     min_score_thresh=.5,
     agnostic_mode=False,
     line_thickness=4,
@@ -129,11 +124,10 @@ def visualize_boxes_and_labels_on_image_array(
   box_to_instance_masks_map = {}
   box_to_instance_boundaries_map = {}
   box_to_keypoints_map = collections.defaultdict(list)
+  print(boxes.shape[0])
   if not max_boxes_to_draw:
     max_boxes_to_draw = boxes.shape[0]
   for i in range(min(max_boxes_to_draw, boxes.shape[0])):
-    print('scores[1]')
-    print(scores[i])
     if scores is None or scores[i] > min_score_thresh:
       box = tuple(boxes[i].tolist())
       if instance_masks is not None:

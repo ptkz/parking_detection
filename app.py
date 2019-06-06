@@ -1,51 +1,84 @@
-from ObjectDetector import Detector
 import io
 import base64
 import os
 import cv2
 import numpy as np
-
+import pandas as pd
 from flask import Flask, render_template, request, make_response, send_file
 from flask_material import Material
-
 from PIL import Image, JpegImagePlugin
 
 import vis_utils
+from ObjectDetector import Detector
 
 app = Flask(__name__, static_folder="assets")
 Material(app)
-
 detector = Detector()
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 CATEGORY_INDEX = {1: {'name': 'occupied', 'id': 1}, 2: {'name': 'empty', 'id': 2}}
+MIN_SCORE_THRESH = 0.80
 
-# detector.detectNumberPlate('twocar.jpg')
+def calculate_accuracy(boxes, classes, scores, img_path):
+    # Detected classes count
+    count_occupied_det = 0
+    count_empty_det = 0
+    # Ground Truth classes count
+    count_occupied_ground = 0
+    count_empty_ground = 0
 
-# def url_for_static(filename, image_type):
-#     root = app.config.get('STATIC_ROOT', '')
-#     return join(root, filename)
+    for i in range(min(200, boxes.shape[0])):
+        if scores is None or scores[i] > MIN_SCORE_THRESH:
+            box = tuple(boxes[i].tolist())
+            class_name = CATEGORY_INDEX[classes[i]]['name']
+            if class_name == 'occupied':
+                count_occupied_det += 1
+            elif class_name == 'empty':
+                count_empty_det += 1   
+
+    # Get the groundtruth labels
+    (path, file_name) = img_path.split('/')
+
+    label_file = pd.read_csv("assets/labels/" + path + "_labels.csv")
+    for index, row in label_file.iterrows() :
+        if row['filename'] == file_name:
+            print(row['filename'], row['class'])
+            if row['class'] == 'occupied':
+                count_occupied_ground += 1
+            elif row['class'] == 'empty':
+                count_empty_ground += 1
+
+    accuracy =( (count_empty_det + count_occupied_det) / (count_empty_ground + count_occupied_ground) ) * 100
+
+    result = {
+        'count_empty_det': count_empty_det, 
+        'count_empty_ground': count_empty_ground,
+        'count_occupied_det': count_occupied_det,
+        'count_occupied_ground': count_occupied_ground,
+        'accuracy': format(accuracy, '.2f')}
+
+    return result
+
 
 def get_images(image_type):
     root = app.config.get('STATIC_ROOT', image_type)
     if image_type == 'test':
         images = os.listdir('assets/test')
         images = ['test/' + image for image in images]
-        # images = [os.path.join(root, image for image in images)]        
-        # print(images)
         return images
-        # return render_template('report.html', hists = hists)
-    else:
-        
+    elif image_type == 'train':
         images = os.listdir('assets/train')
-        # images = [os.path.join(root, image for image in images)]
         images = ['train/' + image for image in images]
-        # print(images)
+        return images
+    else:
+        images = os.listdir('assets/uploads')
+        images = ['uploads/' + image for image in images]
         return images
 
-def detect_image(image): 
-    (boxes, scores, classes, num) = detector.get_classification(image)
+def visualize_image(image, boxes, scores, classes, num): 
+
+    # Draw bounding boxes to the image based on classification results
     img = vis_utils.visualize_boxes_and_labels_on_image_array(
         image, 
         np.squeeze(boxes),
@@ -54,72 +87,101 @@ def detect_image(image):
         CATEGORY_INDEX,
         use_normalized_coordinates=True,
         line_thickness=4,
-        min_score_thresh=0.80,
+        min_score_thresh=MIN_SCORE_THRESH,
         skip_scores=False,
         skip_labels=False)
-        
+
+    # Return the image with bounding boxes in a Base64 format    
     image_pil = Image.fromarray(np.uint8(img))
     byte_io = io.BytesIO()
     image_pil.save(byte_io, format='JPEG')
-    return base64.b64encode(byte_io.getvalue()).decode('utf-8')
+
+    return base64.b64encode(byte_io.getvalue())
 
 
 @app.route("/")
 def index():
     if request.method == 'GET':
+
+        # Load test and train images to show 
         test_images = get_images('test')
         train_images = get_images('train')
-        return render_template('index.html', test_images=test_images, train_images=train_images)
+        uploaded_images = get_images('uploaded')
+
+        return render_template('index.html', test_images=test_images, train_images=train_images, uploaded_images=uploaded_images)
 
 
 @app.route("/", methods=['POST'])
 def upload():
     if request.method == 'POST':
 
-
+        # Retrieve the uploaded image
         upload = request.files['file']
         filename = upload.filename
 
+        # Specify path to save the uploaded image
         target = os.path.join(APP_ROOT, 'assets', 'uploads')
         destination = '/'.join([target, filename])
 
+        # Save the uploaded image and read it
         upload.save(destination)
+        image = cv2.imread(destination)
 
-        file = cv2.imread(destination)
+        # Run parking detection
+        (boxes, scores, classes, num) = detector.get_classification(image)
+        base64image = visualize_image(image, boxes, scores, classes, num)
 
-        # file = cv2.imread(request.files['file'].stream)
-        # img = detector.detectObject(file)
-        
-        # byte_io = io.BytesIO()
-        # byte_io.write(img)
-        # base64image = base64.b64encode(byte_io.getvalue()).decode('utf-8')
-        base64image = detect_image(file)
 
+        # Decode image from base64 and save to the /uploads folder
+        imgdata = base64.b64decode(base64image)
+        with open(destination, 'wb') as f:
+            f.write(imgdata)
+
+        base64image = base64image.decode('utf-8')
+
+        # Load test and train images to show 
         test_images = get_images('test')
         train_images = get_images('train')
-        # result = base64image[2:-1]
+        uploaded_images = get_images('uploaded')
 
-        # print(result)
-        # byte_io.seek(0,0)
-        # response = make_response(send_file(byte_io,mimetype='image/jpg'))
-        # response.headers['Content-Transfer-Encoding']='base64'
-        # return send_file(byte_io, mimetype='image/jpg', as_attachment=False)
-        return render_template('index.html', detection_img=base64image, test_images=test_images, train_images=train_images)
-        # return response
+        return render_template('index.html', 
+            detection_img=base64image, 
+            test_images=test_images, 
+            train_images=train_images, 
+            uploaded_images=uploaded_images)
 
 @app.route("/run_detection/<path:filename>", methods = ['GET'])
 def run_detection(filename):
     if request.method == 'GET':
+
+        # Get filepath and read the image
+        file_path = os.path.join('assets', filename)
+        image = cv2.imread(file_path)
+
+        # Run parking detection
+        (boxes, scores, classes, num) = detector.get_classification(image)
+        base64image = visualize_image(image, boxes, scores, classes, num)
+
+        # Calculate the accuracy
+        accuracy = calculate_accuracy(
+            np.squeeze(boxes),
+            np.squeeze(classes).astype(np.int32),
+            np.squeeze(scores),
+            filename)
+
+        # Load test and train images to show
         test_images = get_images('test')
         train_images = get_images('train')
+        uploaded_images = get_images('uploaded')
 
-        file_path = os.path.join('assets', filename)
-        print(file_path)
+        base64image = base64image.decode('utf-8')
 
-        # image = Image.open(file_path)
-        image = cv2.imread(file_path)
-        base64image = detect_image(image)
-        return render_template('index.html', detection_img=base64image, test_images=test_images, train_images=train_images)
+        return render_template('index.html',
+            detection_img=base64image,
+            test_images=test_images, 
+            train_images=train_images, 
+            uploaded_images=uploaded_images,
+            accuracy=accuracy)
 
 if __name__ == "__main__":
     app.run(debug=True)
