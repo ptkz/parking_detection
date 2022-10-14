@@ -9,7 +9,7 @@ To recreate the environment run
 ```
 conda env create -f environment.yml
 ```
-If the environment is installed properly, run the app with 
+If the environment is installed properly, activate it and run the app with 
 
 ```
 python app.py

@@ -43,7 +43,6 @@ def calculate_accuracy(boxes, classes, scores, img_path):
     label_file = pd.read_csv("assets/labels/" + path + "_labels.csv")
     for index, row in label_file.iterrows() :
         if row['filename'] == file_name:
-            print(row['filename'], row['class'])
             if row['class'] == 'occupied':
                 count_occupied_ground += 1
             elif row['class'] == 'empty':

@@ -1,4 +1,4 @@
-name: tensorflow1
+name: fallback1
 channels:
   - anaconda
   - defaults
